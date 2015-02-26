@@ -10,15 +10,23 @@ Please register:
 <h4>{{emptyPassword}}</h4>
 <h4>{{emptyPassword2}}</h4>
 <h4>{{invalidEmail}}</h4>
+<h4>{{invalidPassWordFormat}}</h4>
+<h4>{{passwordToShort}}</h4>
+<h4>{{usernameFormatError}}</h4>
+<h4>{{userNameSpaceError}}</h4>
 
 <form action='/processreg' method='POST'>
 
-User-id: <input type='text' name='userid'><br>
-Email address: <input type='email' name='email'><br>
+User-id: <input type='text' name='userid' value="{{userid}}" ><br>
+Email address: <input type='email' name='email' value="{{email}}"><br>
 Password: <input type='password' name='passwd'><br>
 Password (again): <input type='password' name='passwd2'><br>
 <input type='submit' value='Register'>
 
 </form>
+
+<a href="/">Home</a>
+<br>
+
 
 {% endblock %}

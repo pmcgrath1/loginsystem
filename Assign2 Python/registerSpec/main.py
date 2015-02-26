@@ -4,7 +4,7 @@
 #   All code in Python, GAE, and webapp2.
 #   Deploy on GAE.
 
-
+import re
 import os
 import cgi
 import webapp2
@@ -16,6 +16,7 @@ from webapp2_extras import sessions
 from google.appengine.ext import ndb
 from gaesessions import get_current_session
 
+errorList = []
 
 class UserDetail(ndb.Model):
     userid = ndb.StringProperty()
@@ -83,37 +84,49 @@ class ChangePassHandler(webapp2.RequestHandler):
         template = JINJA.get_template('changePass.html')
         self.response.write(template.render({ 'the_title': 'Change Your Password'}) )
         
-        
-
-       
-
     def post(self):
-        print "POST in ChangePassHandler"
-        
-        newpasswsd = self.request.get('newpasswd')
-        num = self.request.get('number')
-        userid = self.request.get('userid')
-        
-       
+        userid =self.request.get('userid')
+        newpasswd = self.request.get('newpasswd')
+        newpasswd1 = self.request.get('newpasswd1')
+        number = self.request.get('number')
 
-       
-        query=ndb.gql("SELECT * FROM confirmedAccounts where userid=:1 AND changeNumber=:2 ",userid, num)
-        row=query.fetch()
-
-        for i in row:
-            print "this" ,i.passwd
-            i.passwd= newpasswsd
-            i.changeNumber = ""
-            i.put()
-            template = JINJA.get_template('changeSuccess.html')
-            self.response.write(template.render({ 'the_title': 'Password Successfully changed'}) )
-
+        if newpasswd =="":
+            template = JINJA.get_template('changePass.html')
+            self.response.write(template.render({ 'the_title': 'Change Your Password','emptyPassword': 'Please enter a password','userid':userid,'number':number}) )
 
         
+        elif len(newpasswd) <= 5:
+            template = JINJA.get_template('changePass.html')
+            self.response.write(template.render({ 'the_title': 'Change Your Password','passwordToShort': 'Password must be at least 5 characters long','userid':userid,'number':number}) )
         
-
+        elif re.match(r'(?=.*\d)(?=.*[a-z])(?=.*[A-Z])',newpasswd) is None:
+            #print "password failed"
+            template = JINJA.get_template('changePass.html')
+            self.response.write(template.render({ 'the_title': 'Change Your Password','invalidPassWordFormat': 'Password must contain at least 1 number, 1 Upper and  1 Lowercase letter','userid':userid,'number':number}) )
         
+        elif newpasswd1 =="":
+            template = JINJA.get_template('changePass.html')
+            self.response.write(template.render({ 'the_title': 'Change Your Password','emptyPassword1': 'Please enter the password a second time','userid':userid,'number':number}) )
 
+
+        elif newpasswd != newpasswd1:
+            template = JINJA.get_template('changePass.html')
+            self.response.write(template.render({ 'the_title': 'Change Your Password','passwordMismatch': 'The passwords do not match','userid':userid,'number':number}) )
+
+        else:
+
+            num = self.request.get('number')
+            userid = self.request.get('userid')
+            query=ndb.gql("SELECT * FROM confirmedAccounts where userid=:1 AND changeNumber=:2",userid, num)
+            row=query.fetch()
+
+            for i in row:
+                print "this" ,i.passwd
+                i.passwd= newpasswd
+                i.changeNumber = ""
+                i.put()
+                template = JINJA.get_template('changeSuccess.html')
+                self.response.write(template.render({ 'the_title': 'Password Successfully changed'}) )
 
 
 class LoginHandler(webapp2.RequestHandler):
@@ -123,32 +136,41 @@ class LoginHandler(webapp2.RequestHandler):
         self.response.write(template.render({ 'the_title': 'Login page'}) )
         print "made it to log in get"
     def post(self):
+
         
         userid = self.request.get('userid')
         passwd = self.request.get('passwd')
 
-        session = get_current_session()
-        session['userid'] = userid
-
-        queryCnames = ndb.gql("SELECT * FROM confirmedAccounts  WHERE userid = :1",  userid  )
-        cNames = queryCnames.fetch()
-
-        if cNames ==[]:
+        if userid =="" or passwd =="":
             template = JINJA.get_template('login.html')
-            self.response.write(template.render({ 'the_title': 'Please Login','UserNameError': 'Please enter a valid username' }) )
+            self.response.write(template.render({ 'the_title': 'Please Login','UserNameError': 'Please enter a Username or Password' }) )
 
         else:
-            for i in cNames:
-               
-                if userid == i.userid and passwd == i.passwd :
 
-                    session = get_current_session()
-                    session['userid'] = self.request.get('userid')
-                    self.redirect('/page1')
 
-                elif passwd != i.passwd:
-                    template = JINJA.get_template('login.html')
-                    self.response.write(template.render({ 'the_title': 'Please Login','wrongPassword': 'Your password was incorrect' }) )
+            session = get_current_session()
+            session['userid'] = userid
+
+            queryCnames = ndb.gql("SELECT * FROM confirmedAccounts  WHERE userid = :1",  userid  )
+            cNames = queryCnames.fetch()
+
+            if cNames ==[]:
+                template = JINJA.get_template('login.html')
+                self.response.write(template.render({ 'the_title': 'Please Login','UserNameError': 'Please enter a valid username' }) )
+
+            else:
+                for i in cNames:
+                   
+                    if userid == i.userid and passwd == i.passwd :
+
+                        session = get_current_session()
+                        session['userid'] = self.request.get('userid')
+                        self.redirect('/page1')
+
+                    elif passwd != i.passwd:
+
+                        template = JINJA.get_template('login.html')
+                        self.response.write(template.render({ 'the_title': 'Please Login','wrongPassword': 'Your password was incorrect' }) )
 
 
 
@@ -241,7 +263,7 @@ class RegisterHandler(webapp2.RequestHandler):
        
         template = JINJA.get_template('reg.html')
         self.response.write(template.render({ 'the_title': 'Welcome to the Registration Page' }) )
-       
+        self.response.out.write(cgi.escape(self.request.get('userid')))
 
     def post(self):
         
@@ -255,19 +277,27 @@ class RegisterHandler(webapp2.RequestHandler):
         ret = query.fetch()
         
         
+            
 
         if userid =="":
             template = JINJA.get_template('reg.html')
-            self.response.write(template.render({ 'the_title': 'Welcome to the Registration Page','UserNameError': 'Invalid User name' }) )
+            self.response.write(template.render({ 'the_title': 'Welcome to the Registration Page','UserNameError': 'You must enter a Username', 'email': email }) )
 
         elif passwd =="":
             template = JINJA.get_template('reg.html')
-            self.response.write(template.render({ 'the_title': 'Welcome to the Registration Page','emptyPassword': 'Please Enter a password' }) )
+            self.response.write(template.render({ 'the_title': 'Welcome to the Registration Page','emptyPassword': 'Please Enter a password','userid': userid, 'email': email}) )
 
         elif passwd2 =="":
             template = JINJA.get_template('reg.html')
             self.response.write(template.render({ 'the_title': 'Welcome to the Registration Page','emptyPassword2': 'Please enter your password a second time' }) )
+                
+        elif len(passwd) <5:
+            template = JINJA.get_template('reg.html')
+            self.response.write(template.render({ 'the_title': 'Welcome to the Registration Page','passwordToShort': 'Password must be at least 5 characters long','userid':userid, 'email': email }) )
 
+        elif re.match(r'(?=.*\d)(?=.*[a-z])(?=.*[A-Z])',passwd) is None:
+            template = JINJA.get_template('reg.html')
+            self.response.write(template.render({ 'the_title': 'Welcome to the Registration Page','invalidPassWordFormat': 'Password must contain at least 1 number, 1 Upper and  1 Lowercase letter','userid':userid, 'email': email }) )
 
         elif passwd != passwd2:
             template = JINJA.get_template('reg.html')
@@ -275,37 +305,49 @@ class RegisterHandler(webapp2.RequestHandler):
 
         elif email=="":
             template = JINJA.get_template('reg.html')
-            self.response.write(template.render({ 'the_title': 'Welcome to the Registration Page','invalidEmail': 'Please enter an email address' }) )
+            self.response.write(template.render({ 'the_title': 'Welcome to the Registration Page','invalidEmail': 'Please enter an email address' ,'userid': userid}) )
 
         elif len(ret) > 0:
             template = JINJA.get_template('reg.html')
-            self.response.write(template.render({ 'the_title': 'Welcome to the Registration Page','userNameUsed': 'The username name is unavailable' }) )
+            self.response.write(template.render({ 'the_title': 'Welcome to the Registration Page','userNameUsed': 'The username name is unavailable' ,'email': email}) )
+
+
 
 
         else:
+            for i in userid:
 
-            #self.redirect('/processreg')
-            user_address = cgi.escape(self.request.get('email'))
-
-            sender_address = "Example.com Support <support@example.com>"
-            subject = "Confirm your registration"
-            body = """Thank you for creating an account! Please confirm your email address by \n clicking on the link below and logging into your account:
-                      http://localhost:8080/confirm?type="""+userid 
-
-            mail.send_mail(sender_address, user_address, subject, body)
-
-            print("Commit to Database")
-            person = UserDetail()
-
-            person.userid = cgi.escape(self.request.get('userid'))
-            person.email = cgi.escape(self.request.get('email') )
-            person.passwd = cgi.escape(self.request.get('passwd'))
-            person.passwd2 = cgi.escape(self.request.get('passwd2'))
-            person.put()
+                print "for loop"
+                if ord(i) == 32:
+                    template = JINJA.get_template('reg.html')
+                    self.response.write(template.render({ 'the_title': 'Welcome to the Registration Page','userNameSpaceError': 'No Spaces allowed in user name', 'email': email }) )
+                    break
+            else:
 
 
-            emailSentPage = JINJA.get_template('emailSent.html')
-            self.response.write(emailSentPage.render({ 'the_email': email }) )
+
+                user_address = cgi.escape(self.request.get('email'))
+
+                sender_address = "Example.com Support <support@example.com>"
+                subject = "Confirm your registration"
+                body = """Thank you for creating an account! Please confirm your email address by \nclicking on the link below and logging into your account:
+
+                http://localhost:8080/confirm?type="""+userid 
+
+                mail.send_mail(sender_address, user_address, subject, body)
+
+                print("Commit to Database")
+                person = UserDetail()
+
+                person.userid = cgi.escape(self.request.get('userid'))
+                person.email = cgi.escape(self.request.get('email') )
+                person.passwd = cgi.escape(self.request.get('passwd'))
+                person.passwd2 = cgi.escape(self.request.get('passwd2'))
+                person.put()
+
+
+                emailSentPage = JINJA.get_template('emailSent.html')
+                self.response.write(emailSentPage.render({ 'the_email': email }) )
 
         # Check if the data items from the POST are empty.
         # Check if passwd == passwd2.

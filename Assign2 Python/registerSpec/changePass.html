@@ -3,12 +3,16 @@
 {% block the_body %}
 
 
-
+<h4>{{invalidPassWordFormat}}</h4>
+<h4>{{passwordToShort}}</h4>
+<h4>{{passwordMismatch}}</h4>
+<h4>{{emptyPassword}}</h4>
+<h4>{{emptyPassword1}}</h4>
 
 
 <form action='/changepassword' method='POST'>
-User_ID <input type='text' name='userid'><br>
-Verification number: <input type='text' name='number'><br>
+User_ID <input type='text' name='userid' value="{{userid}}"><br>
+Verification number: <input type='text' name='number' value ="{{number}}"><br>
 New Password: <input type='password' name='newpasswd'><br>
 New Password again: <input type='password' name='newpasswd1'><br>
 
