@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block the_body %}
+
+Please register:
+<h4>{{ UserNameError}}</h4>
+<h4>{{passwordError}}</h4>
+<h4>{{userNameUsed}}</h4>
+<h4>{{passwordMismatch}}</h4>
+<h4>{{emptyPassword}}</h4>
+<h4>{{emptyPassword2}}</h4>
+<h4>{{invalidEmail}}</h4>
+
+<form action='/processreg' method='POST'>
+
+User-id: <input type='text' name='userid'><br>
+Email address: <input type='email' name='email'><br>
+Password: <input type='password' name='passwd'><br>
+Password (again): <input type='password' name='passwd2'><br>
+<input type='submit' value='Register'>
+
+</form>
+
+{% endblock %}

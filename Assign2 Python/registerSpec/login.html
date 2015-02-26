@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block the_body %}
+
+
+<h2>{{login_message}}</h2>
+
+
+Please Login:
+<h4>{{ UserNameError}}</h4>
+<h4>{{emptyPassword}}</h4>
+<h4>{{succesfulLogin}}</h4>
+<h4>{{wrongPassword}}</h4>
+
+
+
+
+<form action='/processlogin' method='POST'>
+
+User-id: <input type='text' name='userid'><br>
+Password: <input type='password' name='passwd'><br>
+<input type='submit' value='Log In'>
+
+</form>
+
+<a href="register">Click here to register for an account</a>
+<br><br>
+<a href="resetpassword">Click here to reset your password</a>
+
+{% endblock %}

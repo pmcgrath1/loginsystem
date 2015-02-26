@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block the_body %}
+
+
+
+
+
+<form action='/changepassword' method='POST'>
+User_ID <input type='text' name='userid'><br>
+Verification number: <input type='text' name='number'><br>
+New Password: <input type='password' name='newpasswd'><br>
+New Password again: <input type='password' name='newpasswd1'><br>
+
+<input type='submit' value='Reset Password'>
+
+</form>
+
+{% endblock %}

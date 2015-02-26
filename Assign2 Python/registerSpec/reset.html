@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block the_body %}
+
+
+
+
+
+<form action='/resetpassword' method='POST'>
+
+User-id: <input type='text' name='userid'><br>
+Email address: <input type='email' name='email'><br>
+
+
+
+<input type='submit' value='Reset Password'>
+
+</form>
+
+{% endblock %}
